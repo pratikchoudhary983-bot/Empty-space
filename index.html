@@ -1,127 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRON FIST - Combat Arena</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0a0a0a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
-            overflow: hidden;
-        }
-        #gameContainer {
-            position: relative;
-            width: 1000px;
-            height: 600px;
-            border: 3px solid #333;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 0 40px rgba(255, 50, 50, 0.3);
-        }
-        canvas { display: block; }
-        #ui-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-        }
-        .health-section { width: 40%; }
-        .player-name {
-            color: #fff; font-size: 14px; font-weight: bold;
-            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-        .health-bar-bg {
-            width: 100%; height: 22px; background: #1a1a1a;
-            border: 2px solid #444; border-radius: 3px; overflow: hidden;
-        }
-        .health-bar { height: 100%; transition: width 0.3s ease; border-radius: 2px; }
-        .p1-health { background: linear-gradient(to bottom, #cc44ff, #7700aa); }
-        .p2-health { background: linear-gradient(to bottom, #44cccc, #007777); }
-        .super-bar-bg {
-            width: 100%; height: 10px; background: #1a1a1a;
-            border: 1px solid #333; border-radius: 2px; margin-top: 4px; overflow: hidden;
-        }
-        .super-bar { height: 100%; border-radius: 2px; transition: width 0.2s ease; }
-        .p1-super { background: linear-gradient(to right, #ff00ff, #ffcc00); }
-        .p2-super { background: linear-gradient(to right, #00ffcc, #00ff66); }
-        #timer {
-            color: #ffcc00; font-size: 36px; font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 200, 0, 0.8); min-width: 60px; text-align: center;
-        }
-        #round-display {
-            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-            color: #fff; font-size: 16px; letter-spacing: 3px; text-transform: uppercase; pointer-events: none;
-        }
-        #announcement {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #fff; font-size: 60px; font-weight: bold; text-transform: uppercase;
-            text-shadow: 0 0 30px rgba(255, 50, 50, 0.8), 0 4px 8px rgba(0,0,0,0.8);
-            letter-spacing: 5px; pointer-events: none; opacity: 0; transition: opacity 0.3s;
-        }
-        #combo-display-p1, #combo-display-p2 {
-            position: absolute; top: 45%; font-size: 24px; font-weight: bold;
-            color: #ffcc00; text-shadow: 0 0 10px rgba(255, 200, 0, 0.8);
-            pointer-events: none; opacity: 0; transition: opacity 0.3s;
-        }
-        #combo-display-p1 { left: 80px; }
-        #combo-display-p2 { right: 80px; }
-        #controls-info {
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-            color: #666; font-size: 11px; text-align: center; pointer-events: none;
-        }
-        #start-screen {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(ellipse at center, #1a001a 0%, #000 70%);
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
-        }
-        #start-screen h1 {
-            color: #cc33ff; font-size: 72px; text-transform: uppercase; letter-spacing: 10px;
-            text-shadow: 0 0 40px rgba(200, 50, 255, 0.8), 0 0 80px rgba(200, 50, 255, 0.4);
-            margin-bottom: 10px; animation: pulse 2s infinite;
-        }
-        #start-screen h2 { color: #888; font-size: 18px; letter-spacing: 5px; margin-bottom: 50px; }
-        #start-screen .start-btn { color: #ffcc00; font-size: 22px; letter-spacing: 3px; animation: blink 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON FIST - Combat Arena</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Segoe UI',sans-serif;overflow:hidden}
+#wrap{position:relative;width:1000px;height:600px;border:2px solid #333;border-radius:6px;overflow:hidden;box-shadow:0 0 30px rgba(150,0,255,0.3)}
+canvas{display:block;background:#111}
+#hud{position:absolute;top:0;left:0;right:0;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.hp-wrap{width:38%}
+.name{color:#fff;font-size:12px;font-weight:bold;letter-spacing:2px;margin-bottom:3px;text-shadow:0 0 6px #fff}
+.hp-bg{width:100%;height:18px;background:#111;border:2px solid #555;border-radius:3px;overflow:hidden}
+.hp-bar{height:100%;transition:width .3s;border-radius:2px}
+.hp1{background:linear-gradient(#d060ff,#7700aa)}
+.hp2{background:linear-gradient(#60dddd,#007777)}
+.sp-bg{width:100%;height:7px;background:#111;border:1px solid #333;border-radius:2px;margin-top:3px;overflow:hidden}
+.sp-bar{height:100%;transition:width .2s;border-radius:2px}
+.sp1{background:linear-gradient(to right,#f0f,#fc0)}
+.sp2{background:linear-gradient(to right,#0fc,#0f6)}
+#tmr{color:#fc0;font-size:32px;font-weight:bold;text-shadow:0 0 10px rgba(255,200,0,.8);min-width:50px;text-align:center}
+#rnd{position:absolute;top:60px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;letter-spacing:3px;pointer-events:none}
+#msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:52px;font-weight:bold;text-shadow:0 0 20px rgba(255,0,100,.8);letter-spacing:4px;pointer-events:none;opacity:0;transition:opacity .3s}
+#c1,#c2{position:absolute;top:42%;font-size:20px;font-weight:bold;color:#fc0;text-shadow:0 0 8px #fc0;pointer-events:none;opacity:0;transition:opacity .3s}
+#c1{left:60px}#c2{right:60px}
+#keys{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);color:#444;font-size:9px;pointer-events:none}
+#menu{position:absolute;inset:0;background:radial-gradient(ellipse,#1a001a,#000 70%);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10}
+#menu h1{color:#c3f;font-size:64px;letter-spacing:8px;text-shadow:0 0 30px #c3f,0 0 60px rgba(200,50,255,.4);margin-bottom:6px;animation:p 2s infinite}
+#menu h2{color:#777;font-size:15px;letter-spacing:4px;margin-bottom:35px}
+#menu .go{color:#fc0;font-size:18px;letter-spacing:3px;animation:b 1.2s infinite}
+@keyframes p{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+@keyframes b{0%,100%{opacity:1}50%{opacity:.2}}
+</style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="1000" height="600"></canvas>
-        <div id="ui-overlay">
-            <div class="health-section">
-                <div class="player-name" id="p1-name">VIPER</div>
-                <div class="health-bar-bg"><div class="health-bar p1-health" id="p1-health" style="width:100%"></div></div>
-                <div class="super-bar-bg"><div class="super-bar p1-super" id="p1-super" style="width:0%"></div></div>
-            </div>
-            <div id="timer">99</div>
-            <div class="health-section">
-                <div class="player-name" style="text-align:right" id="p2-name">SHAMAN</div>
-                <div class="health-bar-bg"><div class="health-bar p2-health" id="p2-health" style="width:100%"></div></div>
-                <div class="super-bar-bg"><div class="super-bar p2-super" id="p2-super" style="width:0%"></div></div>
-            </div>
-        </div>
-        <div id="round-display">ROUND 1</div>
-        <div id="announcement"></div>
-        <div id="combo-display-p1"></div>
-        <div id="combo-display-p2"></div>
-        <div id="controls-info">P1: WASD + F(punch) G(kick) H(special) | P2: Arrows + J(punch) K(kick) L(special) | SPACE to start</div>
-        <div id="start-screen">
-            <h1>IRON FIST</h1>
-            <h2>COMBAT ARENA</h2>
-            <div class="start-btn">PRESS SPACE TO FIGHT</div>
-        </div>
-    </div>
-<script src="game.js"></script>
+<div id="wrap">
+<canvas id="cv" width="1000" height="600"></canvas>
+<div id="hud">
+<div class="hp-wrap"><div class="name">VIPER</div><div class="hp-bg"><div class="hp-bar hp1" id="hp1" style="width:100%"></div></div><div class="sp-bg"><div class="sp-bar sp1" id="sp1" style="width:0%"></div></div></div>
+<div id="tmr">99</div>
+<div class="hp-wrap"><div class="name" style="text-align:right">SHAMAN</div><div class="hp-bg"><div class="hp-bar hp2" id="hp2" style="width:100%"></div></div><div class="sp-bg"><div class="sp-bar sp2" id="sp2" style="width:0%"></div></div></div>
+</div>
+<div id="rnd">ROUND 1</div>
+<div id="msg"></div>
+<div id="c1"></div><div id="c2"></div>
+<div id="keys">P1: WASD + F(punch) G(kick) H(special) | P2: Arrows + J(punch) K(kick) L(special) | SPACE start</div>
+<div id="menu"><h1>IRON FIST</h1><h2>COMBAT ARENA</h2><div class="go">PRESS SPACE TO FIGHT</div></div>
+</div>
+<script>
+"use strict";
+const cv=document.getElementById('cv'),c=cv.getContext('2d'),W=1000,H=600,GND=H-80;
+let gs='menu',rnd=1,tmr=99,ti=null,w1=0,w2=0,pts=[],shake=0;
+const K={};
+document.addEventListener('keydown',e=>{K[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();if(gs==='menu')startGame();if(gs==='over')resetAll();}});
+document.addEventListener('keyup',e=>{K[e.key.toLowerCase()]=false;});
+
+class Fighter{
+constructor(x,dir,name,type){
+this.x=x;this.y=GND;this.vx=0;this.vy=0;this.dir=dir;
+this.name=name;this.type=type;
+this.hp=100;this.sp=0;this.st='idle';this.t=0;
+this.af=0;this.at=0;this.combo=0;this.ct=0;
+this.block=false;this.hit2=false;this.gnd=true;
+}
+reset(x){this.x=x;this.y=GND;this.vx=0;this.vy=0;this.hp=100;this.sp=0;this.st='idle';this.t=0;this.combo=0;this.ct=0;this.block=false;this.gnd=true;}
+hbox(){return{x:this.x-25,y:this.y-110,w:50,h:110};}
+abox(){
+if(this.st==='punch'&&this.t>5&&this.t<14)return{x:this.x+this.dir*30,y:this.y-85,w:50,h:25};
+if(this.st==='kick'&&this.t>7&&this.t<16)return{x:this.x+this.dir*25,y:this.y-45,w:55,h:30};
+if(this.st==='special'&&this.t>9&&this.t<22)return{x:this.x+this.dir*20,y:this.y-95,w:80,h:80};
+return null;
+}
+dmg(){return this.st==='punch'?8:this.st==='kick'?12:this.st==='special'?25:0;}
+atk(t){if(this.st!=='idle'&&this.st!=='walk')return;if(t==='special'&&this.sp<50)return;this.st=t;this.t=0;this.hit2=false;if(t==='special')this.sp-=50;}
+hurt(d,a){
+if(this.block){d=Math.floor(d*.2);this.st='block';this.t=0;}
+else{this.st='hit';this.t=0;this.vx=-this.dir*7;a.combo++;a.ct=80;if(a.combo>1)d=Math.floor(d*(1+a.combo*.15));}
+this.hp=Math.max(0,this.hp-d);a.sp=Math.min(100,a.sp+d*.8);shake=7;
+for(let i=0;i<12;i++)pts.push({x:this.x,y:this.y-55,vx:(Math.random()-.5)*14,vy:(Math.random()-.5)*14,l:25+Math.random()*10,ml:35,sz:3+Math.random()*4,cl:this.type==='viper'?'#c4f':'#0cc'});
+}
+update(){
+this.at++;if(this.at>6){this.at=0;this.af++;}
+if(this.ct>0){this.ct--;if(!this.ct)this.combo=0;}
+this.t++;
+if(this.st==='punch'&&this.t>18)this.st='idle';
+if(this.st==='kick'&&this.t>22)this.st='idle';
+if(this.st==='special'&&this.t>35)this.st='idle';
+if(this.st==='hit'&&this.t>14)this.st='idle';
+if(this.st==='block'&&this.t>10)this.st='idle';
+this.x+=this.vx;this.y+=this.vy;this.vx*=.85;
+if(!this.gnd){this.vy+=.8;if(this.y>=GND){this.y=GND;this.vy=0;this.gnd=true;if(this.st==='jump')this.st='idle';}}
+this.x=Math.max(45,Math.min(W-45,this.x));
+if(this.hp<=0&&this.st!=='ko'){this.st='ko';this.t=0;}
+}
+}// Drawing functions
+function drawViper(f){
+const bob=Math.sin(f.af*.4)*2,t=f.t;
+let by=bob,pe=0,ke=0;
+if(f.st==='hit')by=-4;
+if(f.st==='block')by=4;
+if(f.st==='punch')pe=t<9?t/9:Math.max(0,1-(t-9)/9);
+if(f.st==='kick')ke=t<10?t/10:Math.max(0,1-(t-10)/12);
+
+c.save();c.translate(f.x,f.y);
+if(f.dir===-1)c.scale(-1,1);
+
+// Shadow
+c.fillStyle='rgba(80,0,120,.2)';c.beginPath();c.ellipse(0,2,22,6,0,0,Math.PI*2);c.fill();
+
+if(f.st==='ko'){
+c.fillStyle='#111';c.fillRect(-32,-10,64,10);
+c.fillStyle='#7b1fa2';c.fillRect(-25,-12,18,12);
+c.fillStyle='#f5dcc8';c.beginPath();c.arc(-28,-14,9,0,Math.PI*2);c.fill();
+c.fillStyle='#6633bb';c.fillRect(-38,-17,12,5);
+c.restore();return;
+}
+
+// Boots
+c.fillStyle='#1a1a1a';
+c.fillRect(-12,-10+by,9,12);
+if(f.st==='kick'){c.save();c.translate(7,-12+by);c.rotate(ke*1.1);c.fillRect(-4,0,9,13);c.restore();}
+else c.fillRect(4,-10+by,9,12);
+c.fillStyle='#1a4';c.fillRect(-10,-8+by,2,8);c.fillRect(6,-8+by,2,8);
+
+// Legs
+let lg=c.createLinearGradient(-13,-50,13,-50);
+lg.addColorStop(0,'#080808');lg.addColorStop(.5,'#222');lg.addColorStop(1,'#080808');
+c.fillStyle=lg;c.fillRect(-13,-50+by,26,42);
+c.fillStyle='#a83';c.fillRect(-13,-28+by,26,2);c.fillRect(-13,-48+by,26,2);
+
+// Belt
+c.fillStyle='#222';c.fillRect(-14,-53+by,28,5);
+for(let i=0;i<7;i++){if(i%2===0){c.fillStyle='#eee';c.fillRect(-14+i*4,-53+by,4,2.5);}}
+c.fillStyle='#aaa';c.beginPath();c.arc(0,-51+by,3,0,Math.PI*2);c.fill();
+
+// Torso
+c.fillStyle='#111';c.fillRect(-12,-74+by,24,22);
+c.fillStyle='#888';c.fillRect(-12,-74+by,24,1.5);c.fillRect(-12,-54+by,24,1.5);
+c.fillStyle='#f0d0b8';c.fillRect(-10,-53+by,20,4);
+
+// Jacket
+let jg=c.createLinearGradient(-22,-80,22,-80);
+jg.addColorStop(0,'#6a1b9a');jg.addColorStop(.5,'#9c27b0');jg.addColorStop(1,'#4a148c');
+c.fillStyle=jg;
+c.beginPath();c.moveTo(-12,-74+by);c.lineTo(-22,-72+by);c.lineTo(-24,-52+by);c.lineTo(-12,-52+by);c.fill();
+c.beginPath();c.moveTo(12,-74+by);c.lineTo(22,-72+by);c.lineTo(24,-52+by);c.lineTo(12,-52+by);c.fill();
+c.fillStyle='rgba(255,200,255,.12)';c.fillRect(-21,-70+by,7,13);c.fillRect(15,-70+by,6,11);
+
+// Arms
+c.lineWidth=5;c.lineCap='round';
+c.strokeStyle='#7b1fa2';c.beginPath();c.moveTo(-10,-69+by);c.lineTo(-19,-56+by);c.stroke();
+c.strokeStyle='#f0d0b8';c.lineWidth=4;c.beginPath();c.moveTo(-19,-56+by);c.lineTo(-17,-48+by);c.stroke();
+
+if(f.st==='punch'){
+c.strokeStyle='#7b1fa2';c.lineWidth=6;
+c.beginPath();c.moveTo(10,-69+by);c.lineTo(10+42*pe,-69+by);c.stroke();
+c.fillStyle='#f0d0b8';c.beginPath();c.arc(10+46*pe,-69+by,5,0,Math.PI*2);c.fill();
+if(pe>.5){c.strokeStyle='rgba(200,100,255,.4)';c.lineWidth=2;
+for(let i=0;i<3;i++){c.beginPath();c.moveTo(10+25*pe-i*8,-69+by+(Math.random()-.5)*8);c.lineTo(10+35*pe-i*8,-69+by+(Math.random()-.5)*8);c.stroke();}}
+}else{
+c.strokeStyle='#7b1fa2';c.lineWidth=5;c.beginPath();c.moveTo(10,-69+by);c.lineTo(19,-56+by);c.stroke();
+c.strokeStyle='#f0d0b8';c.lineWidth=4;c.beginPath();c.moveTo(19,-56+by);c.lineTo(17,-48+by);c.stroke();
+}
+
+// Head
+c.fillStyle='#f0d0b8';c.fillRect(-3,-79+by,6,5);
+c.fillStyle='#f5dcc8';c.beginPath();c.ellipse(0,-89+by,10,12,0,0,Math.PI*2);c.fill();
+c.fillStyle='#333';c.fillRect(-5,-91+by,3,2.5);c.fillRect(2,-91+by,3,2.5);
+c.fillStyle='#fff';c.fillRect(-4,-91+by,1.2,1.2);c.fillRect(3,-91+by,1.2,1.2);
+c.fillStyle='#c33';c.fillRect(-2,-84+by,5,1.5);
+
+// Hair
+let hg=c.createLinearGradient(-12,-105,12,-80);
+hg.addColorStop(0,'#73c');hg.addColorStop(1,'#31a');
+c.fillStyle=hg;
+c.beginPath();c.moveTo(-11,-89+by);c.quadraticCurveTo(-13,-106+by,0,-109+by);c.quadraticCurveTo(13,-106+by,11,-89+by);c.fill();
+c.fillRect(-8,-99+by,16,6);
+c.strokeStyle='#63b';c.lineWidth=4;
+c.beginPath();c.moveTo(-7,-88+by);c.quadraticCurveTo(-12,-65+by,-9,-42+by);c.quadraticCurveTo(-7,-28+by,-10,-14+by);c.stroke();
+c.fillStyle='#fc0';c.beginPath();c.arc(-10,-11+by,2.5,0,Math.PI*2);c.fill();
+
+// Goggles
+c.strokeStyle='#69c';c.lineWidth=1.5;
+c.beginPath();c.arc(-5,-100+by,4,0,Math.PI*2);c.stroke();
+c.beginPath();c.arc(5,-100+by,4,0,Math.PI*2);c.stroke();
+c.fillStyle='rgba(80,160,255,.3)';
+c.beginPath();c.arc(-5,-100+by,3,0,Math.PI*2);c.fill();
+c.beginPath();c.arc(5,-100+by,3,0,Math.PI*2);c.fill();
+
+// Special FX
+if(f.st==='special'&&f.t>4&&f.t<32){
+let a=f.t<12?(f.t-4)/8:Math.max(0,(32-f.t)/20);
+c.globalAlpha=a;
+let sg=c.createRadialGradient(30,-65+by,4,30,-65+by,35+f.t*.6);
+sg.addColorStop(0,'#f0f');sg.addColorStop(.5,'#90c');sg.addColorStop(1,'rgba(80,0,160,0)');
+c.fillStyle=sg;c.beginPath();c.arc(30,-65+by,30+f.t*.5,0,Math.PI*2);c.fill();
+c.strokeStyle='#fcf';c.lineWidth=1.5;
+for(let i=0;i<4;i++){let an=f.t*.2+i*1.5;c.beginPath();c.moveTo(30+Math.cos(an)*16,-65+by+Math.sin(an)*16);c.lineTo(30+Math.cos(an)*28,-65+by+Math.sin(an)*28);c.stroke();}
+c.globalAlpha=1;
+}
+
+// Block
+if(f.st==='block'){c.strokeStyle='rgba(180,80,255,.45)';c.lineWidth=2.5;c.setLineDash([3,3]);c.beginPath();c.arc(4,-60+by,28,-Math.PI/2,Math.PI/2);c.stroke();c.setLineDash([]);}
+// Hit flash
+if(f.st==='hit'&&f.t<4){c.fillStyle='rgba(255,100,255,.35)';c.fillRect(-24,-112+by,48,120);}
+
+c.restore();
+}// Shaman drawing
+function drawShaman(f){
+const bob=Math.sin(f.af*.35)*1.5,t=f.t;
+let by=bob,pe=0,ke=0;
+if(f.st==='hit')by=-4;
+if(f.st==='block')by=4;
+if(f.st==='punch')pe=t<9?t/9:Math.max(0,1-(t-9)/9);
+if(f.st==='kick')ke=t<10?t/10:Math.max(0,1-(t-10)/12);
+
+c.save();c.translate(f.x,f.y);
+if(f.dir===-1)c.scale(-1,1);
+
+c.fillStyle='rgba(0,80,80,.18)';c.beginPath();c.ellipse(0,2,24,7,0,0,Math.PI*2);c.fill();
+
+if(f.st==='ko'){
+c.fillStyle='#1a1a2e';c.fillRect(-32,-12,64,12);
+c.fillStyle='#e8c8a8';c.beginPath();c.ellipse(18,-14,8,9,.2,0,Math.PI*2);c.fill();
+c.strokeStyle='#4a3728';c.lineWidth=3;c.beginPath();c.moveTo(-30,-4);c.lineTo(30,-6);c.stroke();
+c.fillStyle='#e8dcc8';c.beginPath();c.arc(-22,-15,5,0,Math.PI*2);c.fill();
+c.restore();return;
+}
+
+// Sandals
+c.fillStyle='#3d2b1f';c.fillRect(-10,-8+by,8,10);
+if(f.st==='kick'){c.save();c.translate(7,-10+by);c.rotate(ke*1.2);c.fillRect(-3,0,8,12);c.restore();}
+else c.fillRect(4,-8+by,8,10);
+c.strokeStyle='#5c4033';c.lineWidth=1.5;
+c.beginPath();c.moveTo(-8,-6+by);c.lineTo(-5,-3+by);c.lineTo(-8,0+by);c.stroke();
+c.beginPath();c.moveTo(6,-6+by);c.lineTo(9,-3+by);c.lineTo(6,0+by);c.stroke();
+
+// Legs
+c.fillStyle='#1a1a2e';c.fillRect(-13,-46+by,11,38);
+c.fillStyle='#e8c8a8';c.fillRect(3,-46+by,10,38);
+c.strokeStyle='#2a2a2a';c.lineWidth=1.5;
+c.beginPath();c.moveTo(3,-40+by);c.lineTo(13,-32+by);c.stroke();
+c.beginPath();c.moveTo(13,-40+by);c.lineTo(3,-32+by);c.stroke();
+
+// Belt
+c.fillStyle='#2a1f14';c.fillRect(-14,-50+by,28,6);
+c.fillStyle='#e8dcc8';
+c.beginPath();c.arc(-7,-47+by,2.5,0,Math.PI*2);c.fill();
+c.beginPath();c.arc(0,-47+by,2.5,0,Math.PI*2);c.fill();
+c.beginPath();c.arc(7,-47+by,2.5,0,Math.PI*2);c.fill();
+c.strokeStyle='#a83';c.lineWidth=1;c.beginPath();c.moveTo(-7,-44+by);c.quadraticCurveTo(0,-40+by,7,-44+by);c.stroke();
+
+// Torso
+c.fillStyle='#1a1a3a';c.fillRect(-12,-76+by,24,28);
+c.strokeStyle='#c93';c.lineWidth=1.5;
+c.beginPath();c.arc(0,-66+by,8,.3,Math.PI-.3);c.stroke();
+c.beginPath();c.arc(0,-63+by,11,.5,Math.PI-.5);c.stroke();
+c.fillStyle='#0ca';c.beginPath();c.arc(0,-58+by,2.5,0,Math.PI*2);c.fill();
+
+// Cape
+let cg=c.createLinearGradient(-26,-82,26,-50);cg.addColorStop(0,'#1a1a2e');cg.addColorStop(1,'#0a0a1a');
+c.fillStyle=cg;
+c.beginPath();c.moveTo(-12,-76+by);c.lineTo(-24,-72+by);c.lineTo(-26,-18+by);c.lineTo(-12,-28+by);c.fill();
+c.beginPath();c.moveTo(12,-76+by);c.lineTo(24,-72+by);c.lineTo(22,-18+by);c.lineTo(12,-28+by);c.fill();
+c.beginPath();c.moveTo(-24,-18+by);c.quadraticCurveTo(-22,-10+by+Math.sin(f.af*.3)*2,-26,0+by);c.lineTo(-18,0+by);c.lineTo(-12,-28+by);c.fill();
+
+// Fur shoulders
+c.fillStyle='#d4c8b0';
+c.beginPath();c.moveTo(-12,-76+by);c.quadraticCurveTo(-21,-82+by,-19,-73+by);c.lineTo(-12,-69+by);c.fill();
+c.beginPath();c.moveTo(12,-76+by);c.quadraticCurveTo(21,-82+by,19,-73+by);c.lineTo(12,-69+by);c.fill();
+c.strokeStyle='#b0a890';c.lineWidth=.8;
+for(let i=0;i<3;i++){c.beginPath();c.moveTo(-17+i*2,-79+by);c.lineTo(-16+i*2,-75+by);c.stroke();c.beginPath();c.moveTo(14+i*2,-79+by);c.lineTo(15+i*2,-75+by);c.stroke();}
+
+// Arms
+c.lineWidth=5;c.lineCap='round';c.strokeStyle='#1a1a3a';
+c.beginPath();c.moveTo(-10,-72+by);c.lineTo(-17,-56+by);c.stroke();
+c.strokeStyle='#a83';c.lineWidth=2.5;c.beginPath();c.moveTo(-16,-58+by);c.lineTo(-18,-53+by);c.stroke();
+
+if(f.st==='punch'){
+c.strokeStyle='#4a3728';c.lineWidth=4;c.beginPath();c.moveTo(10,-72+by);c.lineTo(10+45*pe,-72+by);c.stroke();
+c.fillStyle='#d4c8b0';c.beginPath();c.arc(10+50*pe,-72+by,6,0,Math.PI*2);c.fill();
+c.fillStyle='#111';c.fillRect(10+47*pe,-74+by,2.5,1.5);c.fillRect(10+52*pe,-74+by,2.5,1.5);
+}else{
+// Staff
+c.strokeStyle='#4a3728';c.lineWidth=4;c.beginPath();c.moveTo(15,-100+by);c.lineTo(12,-8+by);c.stroke();
+c.fillStyle='#d4c8b0';c.beginPath();c.arc(15,-103+by,6,0,Math.PI*2);c.fill();
+c.fillStyle='#222';c.fillRect(12,-105+by,2.5,1.5);c.fillRect(16,-105+by,2.5,1.5);
+c.strokeStyle='#8b7355';c.lineWidth=1.5;
+c.beginPath();c.moveTo(11,-107+by);c.lineTo(6,-114+by);c.stroke();
+c.beginPath();c.moveTo(19,-107+by);c.lineTo(24,-114+by);c.stroke();
+c.strokeStyle='rgba(0,200,160,.35)';c.lineWidth=1.5;c.setLineDash([2,2]);
+c.beginPath();c.moveTo(13,-82+by);c.lineTo(14,-62+by);c.lineTo(12,-45+by);c.stroke();c.setLineDash([]);
+c.strokeStyle='#e8c8a8';c.lineWidth=4;c.beginPath();c.moveTo(10,-72+by);c.lineTo(13,-56+by);c.stroke();
+}
+
+// Head
+c.fillStyle='#e8c8a8';c.beginPath();c.ellipse(0,-89+by,9,11,0,0,Math.PI*2);c.fill();
+c.strokeStyle='#c33';c.lineWidth=1.2;
+c.beginPath();c.moveTo(-4,-87+by);c.lineTo(-6,-82+by);c.stroke();
+c.beginPath();c.moveTo(4,-87+by);c.lineTo(6,-82+by);c.stroke();
+c.fillStyle='#2a4a2a';c.fillRect(-4,-91+by,2.5,2.5);c.fillRect(2,-91+by,2.5,2.5);
+
+// Hair
+c.fillStyle='#1a1a1a';
+c.beginPath();c.moveTo(-10,-91+by);c.quadraticCurveTo(-11,-102+by,0,-104+by);c.quadraticCurveTo(11,-102+by,10,-91+by);c.lineTo(7,-93+by);c.lineTo(-7,-93+by);c.fill();
+c.fillStyle='#0aa';
+c.beginPath();c.moveTo(-7,-100+by);c.lineTo(-10,-108+by);c.lineTo(-5,-104+by);c.fill();
+c.beginPath();c.moveTo(4,-100+by);c.lineTo(7,-108+by);c.lineTo(2,-104+by);c.fill();
+
+// Skull crown
+c.fillStyle='#e8dcc8';c.beginPath();c.ellipse(0,-107+by,8,6,0,0,Math.PI*2);c.fill();
+c.fillStyle='#1a1a1a';
+c.beginPath();c.ellipse(-3,-107+by,2.5,2.5,0,0,Math.PI*2);c.fill();
+c.beginPath();c.ellipse(3,-107+by,2.5,2.5,0,0,Math.PI*2);c.fill();
+c.beginPath();c.moveTo(-.8,-104+by);c.lineTo(.8,-104+by);c.lineTo(0,-102+by);c.fill();
+
+// Antlers
+c.strokeStyle='#5c4033';c.lineWidth=2.5;c.lineCap='round';
+c.beginPath();c.moveTo(-7,-110+by);c.lineTo(-15,-122+by);c.stroke();
+c.lineWidth=1.5;
+c.beginPath();c.moveTo(-11,-117+by);c.lineTo(-17,-125+by);c.stroke();
+c.beginPath();c.moveTo(-13,-119+by);c.lineTo(-9,-127+by);c.stroke();
+c.beginPath();c.moveTo(-14,-121+by);c.lineTo(-19,-129+by);c.stroke();
+c.lineWidth=2.5;
+c.beginPath();c.moveTo(7,-110+by);c.lineTo(15,-122+by);c.stroke();
+c.lineWidth=1.5;
+c.beginPath();c.moveTo(11,-117+by);c.lineTo(17,-125+by);c.stroke();
+c.beginPath();c.moveTo(13,-119+by);c.lineTo(9,-127+by);c.stroke();
+c.beginPath();c.moveTo(14,-121+by);c.lineTo(19,-129+by);c.stroke();
+
+// Special FX
+if(f.st==='special'&&f.t>4&&f.t<32){
+let a=f.t<12?(f.t-4)/8:Math.max(0,(32-f.t)/20);
+c.globalAlpha=a;
+let sg=c.createRadialGradient(28,-65+by,4,28,-65+by,38+f.t*.7);
+sg.addColorStop(0,'#0fa');sg.addColorStop(.4,'#097');sg.addColorStop(1,'rgba(0,80,60,0)');
+c.fillStyle=sg;c.beginPath();c.arc(28,-65+by,35+f.t*.5,0,Math.PI*2);c.fill();
+c.fillStyle='#afc';
+for(let i=0;i<3;i++){let sx=28+Math.cos(f.t*.15+i*2)*20,sy=-65+by+Math.sin(f.t*.15+i*2)*20;c.beginPath();c.arc(sx,sy,4,0,Math.PI*2);c.fill();}
+c.globalAlpha=1;
+}
+
+if(f.st==='block'){c.strokeStyle='rgba(0,180,130,.4)';c.lineWidth=2.5;c.setLineDash([4,3]);c.beginPath();c.arc(4,-60+by,30,-Math.PI/2,Math.PI/2);c.stroke();c.setLineDash([]);}
+if(f.st==='hit'&&f.t<4){c.fillStyle='rgba(0,255,180,.25)';c.fillRect(-26,-130+by,52,140);}
+
+c.restore();
+}// Game logic, background, loop
+let p1=new Fighter(200,1,'VIPER','viper');
+let p2=new Fighter(800,-1,'SHAMAN','shaman');
+
+function drawBG(){
+let g=c.createLinearGradient(0,0,0,H);
+g.addColorStop(0,'#0a0015');g.addColorStop(.4,'#0d0d1a');g.addColorStop(.7,'#0a1515');g.addColorStop(1,'#050505');
+c.fillStyle=g;c.fillRect(0,0,W,H);
+c.fillStyle='rgba(120,80,180,.02)';c.beginPath();c.moveTo(W/2,0);c.lineTo(W/2-300,H);c.lineTo(W/2+300,H);c.fill();
+c.fillStyle='rgba(180,0,255,.012)';c.fillRect(0,0,80,H);
+c.fillStyle='rgba(0,180,180,.012)';c.fillRect(W-80,0,80,H);
+let fg=c.createLinearGradient(0,GND,0,H);fg.addColorStop(0,'#1a1a1a');fg.addColorStop(1,'#080808');
+c.fillStyle=fg;c.fillRect(0,GND,W,H-GND);
+c.strokeStyle='rgba(130,40,180,.25)';c.lineWidth=1.5;c.beginPath();c.moveTo(40,GND+1);c.lineTo(W-40,GND+1);c.stroke();
+c.strokeStyle='rgba(255,255,255,.02)';c.lineWidth=1;
+for(let i=0;i<W;i+=55){c.beginPath();c.moveTo(i,GND);c.lineTo(i,H);c.stroke();}
+}
+
+function overlap(a,b){if(!a||!b)return false;return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+
+function input(){
+if(gs!=='fight')return;
+if(p1.st==='idle'||p1.st==='walk'){
+if(K['a']){p1.vx=-5;p1.st='walk';}else if(K['d']){p1.vx=5;p1.st='walk';}else if(p1.st==='walk')p1.st='idle';
+if(K['w']&&p1.gnd){p1.vy=-14;p1.gnd=false;p1.st='jump';}
+p1.block=!!K['s'];
+}
+if(K['f'])p1.atk('punch');if(K['g'])p1.atk('kick');if(K['h'])p1.atk('special');
+
+if(p2.st==='idle'||p2.st==='walk'){
+if(K['arrowleft']){p2.vx=-5;p2.st='walk';}else if(K['arrowright']){p2.vx=5;p2.st='walk';}else if(p2.st==='walk')p2.st='idle';
+if(K['arrowup']&&p2.gnd){p2.vy=-14;p2.gnd=false;p2.st='jump';}
+p2.block=!!K['arrowdown'];
+}
+if(K['j'])p2.atk('punch');if(K['k'])p2.atk('kick');if(K['l'])p2.atk('special');
+}
+
+function combat(){
+let a1=p1.abox(),h2=p2.hbox();
+if(a1&&!p1.hit2&&overlap(a1,h2)){p1.hit2=true;p2.hurt(p1.dmg(),p1);}
+let a2=p2.abox(),h1=p1.hbox();
+if(a2&&!p2.hit2&&overlap(a2,h1)){p2.hit2=true;p1.hurt(p2.dmg(),p2);}
+if(p1.x<p2.x){p1.dir=1;p2.dir=-1;}else{p1.dir=-1;p2.dir=1;}
+let d=Math.abs(p1.x-p2.x);
+if(d<45){let push=(45-d)/2;if(p1.x<p2.x){p1.x-=push;p2.x+=push;}else{p1.x+=push;p2.x-=push;}}
+}
+
+function updPts(){for(let i=pts.length-1;i>=0;i--){let p=pts[i];p.x+=p.vx;p.y+=p.vy;p.vx*=.9;p.vy*=.9;p.l--;if(p.l<=0)pts.splice(i,1);}}
+function drwPts(){pts.forEach(p=>{c.globalAlpha=p.l/p.ml;c.fillStyle=p.cl;c.beginPath();c.arc(p.x,p.y,p.sz/2,0,Math.PI*2);c.fill();});c.globalAlpha=1;}
+
+function ui(){
+document.getElementById('hp1').style.width=p1.hp+'%';
+document.getElementById('hp2').style.width=p2.hp+'%';
+document.getElementById('sp1').style.width=p1.sp+'%';
+document.getElementById('sp2').style.width=p2.sp+'%';
+document.getElementById('tmr').textContent=tmr;
+let e1=document.getElementById('c1'),e2=document.getElementById('c2');
+if(p1.combo>1){e1.textContent=p1.combo+' HIT COMBO!';e1.style.opacity='1';}else e1.style.opacity='0';
+if(p2.combo>1){e2.textContent=p2.combo+' HIT COMBO!';e2.style.opacity='1';}else e2.style.opacity='0';
+}
+
+function msg(t,dur){let e=document.getElementById('msg');e.textContent=t;e.style.opacity='1';setTimeout(()=>{e.style.opacity='0';},dur||2000);}
+
+function chkEnd(){
+if(p1.hp<=0||p2.hp<=0||tmr<=0){
+gs='end';clearInterval(ti);
+let w;
+if(p1.hp<=0){w='p2';w2++;}else if(p2.hp<=0){w='p1';w1++;}else{w=p1.hp>p2.hp?'p1':'p2';if(w==='p1')w1++;else w2++;}
+let wn=w==='p1'?'VIPER':'SHAMAN';
+if(w1>=2||w2>=2){msg(wn+' WINS!',3000);setTimeout(()=>{gs='over';msg('GAME OVER - PRESS SPACE',99999);},3000);}
+else{msg(wn+' WINS ROUND '+rnd,2000);rnd++;setTimeout(startRound,3000);}
+}
+}
+
+function startRound(){
+p1.reset(200);p2.reset(800);tmr=99;pts=[];
+document.getElementById('rnd').textContent='ROUND '+rnd;
+msg('ROUND '+rnd,1500);
+setTimeout(()=>{msg('FIGHT!',1000);gs='fight';ti=setInterval(()=>{if(gs==='fight'){tmr--;if(tmr<=0)tmr=0;}},1000);},2000);
+}
+
+function startGame(){document.getElementById('menu').style.display='none';rnd=1;w1=0;w2=0;startRound();}
+function resetAll(){document.getElementById('msg').style.opacity='0';rnd=1;w1=0;w2=0;startRound();}
+
+function loop(){
+c.save();
+if(shake>0){c.translate(Math.random()*shake-shake/2,Math.random()*shake-shake/2);shake*=.8;if(shake<.4)shake=0;}
+drawBG();
+if(gs==='fight'||gs==='end'){input();combat();p1.update();p2.update();updPts();chkEnd();}
+drawViper(p1);drawShaman(p2);drwPts();ui();
+c.restore();
+requestAnimationFrame(loop);
+}
+loop();</script>
 </body>
 </html>
