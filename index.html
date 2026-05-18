@@ -36,32 +36,24 @@
         }
         .health-section { width: 40%; }
         .player-name {
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
+            color: #fff; font-size: 14px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;
             text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
         .health-bar-bg {
-            width: 100%;
-            height: 22px;
-            background: #1a1a1a;
-            border: 2px solid #444;
-            border-radius: 3px;
-            overflow: hidden;
+            width: 100%; height: 22px; background: #1a1a1a;
+            border: 2px solid #444; border-radius: 3px; overflow: hidden;
         }
         .health-bar { height: 100%; transition: width 0.3s ease; border-radius: 2px; }
-        .p1-health { background: linear-gradient(to bottom, #ff4444, #cc0000); }
-        .p2-health { background: linear-gradient(to bottom, #4488ff, #0044cc); }
+        .p1-health { background: linear-gradient(to bottom, #cc44ff, #7700aa); }
+        .p2-health { background: linear-gradient(to bottom, #44cccc, #007777); }
         .super-bar-bg {
             width: 100%; height: 10px; background: #1a1a1a;
             border: 1px solid #333; border-radius: 2px; margin-top: 4px; overflow: hidden;
         }
         .super-bar { height: 100%; border-radius: 2px; transition: width 0.2s ease; }
-        .p1-super { background: linear-gradient(to right, #ff8800, #ffcc00); }
-        .p2-super { background: linear-gradient(to right, #8800ff, #cc00ff); }
+        .p1-super { background: linear-gradient(to right, #ff00ff, #ffcc00); }
+        .p2-super { background: linear-gradient(to right, #00ffcc, #00ff66); }
         #timer {
             color: #ffcc00; font-size: 36px; font-weight: bold;
             text-shadow: 0 0 15px rgba(255, 200, 0, 0.8); min-width: 60px; text-align: center;
@@ -89,12 +81,12 @@
         }
         #start-screen {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(ellipse at center, #1a0000 0%, #000 70%);
+            background: radial-gradient(ellipse at center, #1a001a 0%, #000 70%);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
         }
         #start-screen h1 {
-            color: #ff3333; font-size: 72px; text-transform: uppercase; letter-spacing: 10px;
-            text-shadow: 0 0 40px rgba(255, 50, 50, 0.8), 0 0 80px rgba(255, 50, 50, 0.4);
+            color: #cc33ff; font-size: 72px; text-transform: uppercase; letter-spacing: 10px;
+            text-shadow: 0 0 40px rgba(200, 50, 255, 0.8), 0 0 80px rgba(200, 50, 255, 0.4);
             margin-bottom: 10px; animation: pulse 2s infinite;
         }
         #start-screen h2 { color: #888; font-size: 18px; letter-spacing: 5px; margin-bottom: 50px; }
@@ -108,13 +100,13 @@
         <canvas id="gameCanvas" width="1000" height="600"></canvas>
         <div id="ui-overlay">
             <div class="health-section">
-                <div class="player-name" id="p1-name">DRAGON</div>
+                <div class="player-name" id="p1-name">VIPER</div>
                 <div class="health-bar-bg"><div class="health-bar p1-health" id="p1-health" style="width:100%"></div></div>
                 <div class="super-bar-bg"><div class="super-bar p1-super" id="p1-super" style="width:0%"></div></div>
             </div>
             <div id="timer">99</div>
             <div class="health-section">
-                <div class="player-name" style="text-align:right" id="p2-name">PHOENIX</div>
+                <div class="player-name" style="text-align:right" id="p2-name">SHAMAN</div>
                 <div class="health-bar-bg"><div class="health-bar p2-health" id="p2-health" style="width:100%"></div></div>
                 <div class="super-bar-bg"><div class="super-bar p2-super" id="p2-super" style="width:0%"></div></div>
             </div>
@@ -130,281 +122,6 @@
             <div class="start-btn">PRESS SPACE TO FIGHT</div>
         </div>
     </div>
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
-
-let gameState = 'start';
-let round = 1;
-let timer = 99;
-let timerInterval = null;
-let p1Wins = 0, p2Wins = 0;
-let particles = [];
-let screenShake = 0;
-
-class Fighter {
-    constructor(x, facing, name, color, altColor) {
-        this.x = x; this.y = H - 130; this.vx = 0; this.vy = 0;
-        this.width = 60; this.height = 110; this.facing = facing;
-        this.name = name; this.color = color; this.altColor = altColor;
-        this.health = 100; this.superMeter = 0;
-        this.state = 'idle'; this.stateTimer = 0;
-        this.animFrame = 0; this.animTimer = 0;
-        this.combo = 0; this.comboTimer = 0;
-        this.isBlocking = false; this.attackHit = false; this.grounded = true;
-    }
-    reset(x) {
-        this.x = x; this.y = H - 130; this.vx = 0; this.vy = 0;
-        this.health = 100; this.superMeter = 0; this.state = 'idle';
-        this.stateTimer = 0; this.combo = 0; this.comboTimer = 0;
-        this.isBlocking = false; this.grounded = true;
-    }
-    getHitbox() { return { x: this.x - this.width/2, y: this.y - this.height, w: this.width, h: this.height }; }
-    getAttackBox() {
-        if (this.state === 'punch' && this.stateTimer > 5 && this.stateTimer < 15)
-            return { x: this.x + this.facing * 30, y: this.y - 80, w: 50, h: 25 };
-        if (this.state === 'kick' && this.stateTimer > 8 && this.stateTimer < 18)
-            return { x: this.x + this.facing * 25, y: this.y - 50, w: 60, h: 30 };
-        if (this.state === 'special' && this.stateTimer > 10 && this.stateTimer < 25)
-            return { x: this.x + this.facing * 20, y: this.y - 90, w: 80, h: 80 };
-        return null;
-    }
-    getDamage() {
-        if (this.state === 'punch') return 8;
-        if (this.state === 'kick') return 12;
-        if (this.state === 'special') return 25;
-        return 0;
-    }
-    attack(type) {
-        if (this.state !== 'idle' && this.state !== 'walk') return;
-        if (type === 'special' && this.superMeter < 50) return;
-        this.state = type; this.stateTimer = 0; this.attackHit = false;
-        if (type === 'special') this.superMeter -= 50;
-    }
-    takeDamage(dmg, attacker) {
-        if (this.isBlocking) {
-            dmg = Math.floor(dmg * 0.2); this.state = 'block'; this.stateTimer = 0;
-        } else {
-            this.state = 'hit'; this.stateTimer = 0; this.vx = -this.facing * 8;
-            attacker.combo++; attacker.comboTimer = 90;
-            if (attacker.combo > 1) dmg = Math.floor(dmg * (1 + attacker.combo * 0.15));
-        }
-        this.health = Math.max(0, this.health - dmg);
-        attacker.superMeter = Math.min(100, attacker.superMeter + dmg * 0.8);
-        screenShake = 8;
-        spawnHitParticles(this.x, this.y - 60, attacker.altColor);
-    }
-    update() {
-        this.animTimer++;
-        if (this.animTimer > 8) { this.animTimer = 0; this.animFrame++; }
-        if (this.comboTimer > 0) { this.comboTimer--; if (this.comboTimer === 0) this.combo = 0; }
-        this.stateTimer++;
-        if (this.state === 'punch' && this.stateTimer > 20) this.state = 'idle';
-        if (this.state === 'kick' && this.stateTimer > 25) this.state = 'idle';
-        if (this.state === 'special' && this.stateTimer > 35) this.state = 'idle';
-        if (this.state === 'hit' && this.stateTimer > 15) this.state = 'idle';
-        if (this.state === 'block' && this.stateTimer > 10) this.state = 'idle';
-        this.x += this.vx; this.y += this.vy; this.vx *= 0.85;
-        if (!this.grounded) {
-            this.vy += 0.8;
-            if (this.y >= H - 130) { this.y = H - 130; this.vy = 0; this.grounded = true; if (this.state === 'jump') this.state = 'idle'; }
-        }
-        this.x = Math.max(40, Math.min(W - 40, this.x));
-        if (this.health <= 0 && this.state !== 'ko') { this.state = 'ko'; this.stateTimer = 0; }
-    }
-    draw() {
-        ctx.save(); ctx.translate(this.x, this.y);
-        const f = this.facing;
-        const bob = Math.sin(this.animFrame * 0.5) * 2;
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath(); ctx.ellipse(0, 0, 30, 8, 0, 0, Math.PI * 2); ctx.fill();
-        if (this.state === 'ko') {
-            ctx.fillStyle = this.color; ctx.fillRect(-40, -15, 80, 15);
-            ctx.fillStyle = this.altColor; ctx.beginPath(); ctx.arc(-30 * f, -15, 15, 0, Math.PI * 2); ctx.fill();
-            ctx.restore(); return;
-        }
-        let bodyOffsetY = bob, armAngle = 0, legSpread = 0;
-        if (this.state === 'walk') legSpread = Math.sin(this.animFrame) * 15;
-        if (this.state === 'punch') { armAngle = Math.min(this.stateTimer * 10, 90); if (this.stateTimer > 12) armAngle = 90 - (this.stateTimer - 12) * 10; }
-        if (this.state === 'kick') { legSpread = Math.min(this.stateTimer * 5, 60); if (this.stateTimer > 15) legSpread = 60 - (this.stateTimer - 15) * 6; }
-        if (this.state === 'hit') bodyOffsetY = -5;
-        if (this.state === 'block') bodyOffsetY = 5;
-        // Legs
-        ctx.strokeStyle = this.color; ctx.lineWidth = 8; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-8, -15 + bodyOffsetY); ctx.lineTo(-8 - legSpread * f * 0.3, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(8, -15 + bodyOffsetY); ctx.lineTo(8 + legSpread * f * 0.5, 0); ctx.stroke();
-        // Body
-        ctx.fillStyle = this.color; ctx.fillRect(-15, -75 + bodyOffsetY, 30, 55);
-        ctx.fillStyle = this.altColor; ctx.fillRect(-15, -40 + bodyOffsetY, 30, 6);
-        // Arms
-        ctx.strokeStyle = this.color; ctx.lineWidth = 7;
-        ctx.beginPath(); ctx.moveTo(-10 * f, -65 + bodyOffsetY); ctx.lineTo(-25 * f, -45 + bodyOffsetY); ctx.stroke();
-        if (this.state === 'punch') {
-            ctx.strokeStyle = this.altColor; ctx.lineWidth = 9;
-            ctx.beginPath(); ctx.moveTo(10 * f, -65 + bodyOffsetY);
-            const punchExtend = armAngle / 90;
-            ctx.lineTo(10 * f + 50 * f * punchExtend, -65 + bodyOffsetY); ctx.stroke();
-            if (punchExtend > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(10 * f + 55 * f * punchExtend, -65 + bodyOffsetY, 7, 0, Math.PI * 2); ctx.fill(); }
-        } else if (this.state === 'block') {
-            ctx.beginPath(); ctx.moveTo(10 * f, -65 + bodyOffsetY); ctx.lineTo(5 * f, -50 + bodyOffsetY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-10 * f, -65 + bodyOffsetY); ctx.lineTo(-5 * f, -50 + bodyOffsetY); ctx.stroke();
-        } else {
-            ctx.beginPath(); ctx.moveTo(10 * f, -65 + bodyOffsetY); ctx.lineTo(25 * f, -45 + bodyOffsetY); ctx.stroke();
-        }
-        // Special effect
-        if (this.state === 'special' && this.stateTimer > 5 && this.stateTimer < 30) {
-            const alpha = this.stateTimer < 15 ? (this.stateTimer - 5) / 10 : (30 - this.stateTimer) / 15;
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = this.altColor; ctx.beginPath();
-            ctx.arc(40 * f, -55 + bodyOffsetY, 25 + Math.sin(this.stateTimer) * 10, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(40 * f, -55 + bodyOffsetY, 30 + this.stateTimer, 0, Math.PI * 2); ctx.stroke();
-            ctx.globalAlpha = 1;
-        }
-        // Head
-        ctx.fillStyle = this.altColor; ctx.beginPath(); ctx.arc(0, -85 + bodyOffsetY, 16, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.fillRect(4 * f, -89 + bodyOffsetY, 5, 4); ctx.fillRect(12 * f, -89 + bodyOffsetY, 5, 4);
-        ctx.fillStyle = this.color; ctx.fillRect(-12, -100 + bodyOffsetY, 24, 6);
-        if (this.state === 'hit' && this.stateTimer < 5) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(-20, -105 + bodyOffsetY, 40, 110); }
-        if (this.state === 'block') { ctx.strokeStyle = 'rgba(100,200,255,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(10 * f, -55 + bodyOffsetY, 30, -Math.PI/2, Math.PI/2); ctx.stroke(); }
-        ctx.restore();
-    }
-}
-
-function spawnHitParticles(x, y, color) {
-    for (let i = 0; i < 12; i++) {
-        particles.push({ x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
-            life: 20+Math.random()*15, maxLife: 35, size: 3+Math.random()*5, color });
-    }
-}
-function updateParticles() {
-    for (let i = particles.length-1; i >= 0; i--) {
-        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vx *= 0.92; p.vy *= 0.92; p.life--;
-        if (p.life <= 0) particles.splice(i, 1);
-    }
-}
-function drawParticles() {
-    particles.forEach(p => { ctx.globalAlpha = p.life/p.maxLife; ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); });
-    ctx.globalAlpha = 1;
-}
-
-let p1 = new Fighter(200, 1, 'DRAGON', 'rgb(180, 40, 40)', 'rgb(255, 100, 50)');
-let p2 = new Fighter(800, -1, 'PHOENIX', 'rgb(40, 60, 180)', 'rgb(80, 150, 255)');
-
-const keys = {};
-document.addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
-    if (e.code === 'Space') { e.preventDefault(); if (gameState === 'start') startGame(); if (gameState === 'gameOver') resetGame(); }
-});
-document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
-
-function drawBackground() {
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, '#0d0d1a'); grad.addColorStop(0.6, '#1a0d0d'); grad.addColorStop(1, '#0d0d0d');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(255, 200, 50, 0.03)';
-    ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2-300, H); ctx.lineTo(W/2+300, H); ctx.fill();
-    const floorGrad = ctx.createLinearGradient(0, H-70, 0, H);
-    floorGrad.addColorStop(0, '#333'); floorGrad.addColorStop(1, '#111');
-    ctx.fillStyle = floorGrad; ctx.fillRect(0, H-70, W, 70);
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
-    for (let i = 0; i < W; i += 50) { ctx.beginPath(); ctx.moveTo(i, H-70); ctx.lineTo(i, H); ctx.stroke(); }
-    ctx.strokeStyle = 'rgba(255, 50, 50, 0.2)'; ctx.lineWidth = 2; ctx.strokeRect(30, H-72, W-60, 4);
-}
-
-function boxOverlap(a, b) { if (!a||!b) return false; return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
-
-function handleInput() {
-    if (gameState !== 'fighting') return;
-    if (p1.state === 'idle' || p1.state === 'walk') {
-        if (keys['a']) { p1.vx = -5; p1.state = 'walk'; }
-        else if (keys['d']) { p1.vx = 5; p1.state = 'walk'; }
-        else if (p1.state === 'walk') p1.state = 'idle';
-        if (keys['w'] && p1.grounded) { p1.vy = -15; p1.grounded = false; p1.state = 'jump'; }
-        p1.isBlocking = !!keys['s'];
-    }
-    if (keys['f']) p1.attack('punch');
-    if (keys['g']) p1.attack('kick');
-    if (keys['h']) p1.attack('special');
-    if (p2.state === 'idle' || p2.state === 'walk') {
-        if (keys['arrowleft']) { p2.vx = -5; p2.state = 'walk'; }
-        else if (keys['arrowright']) { p2.vx = 5; p2.state = 'walk'; }
-        else if (p2.state === 'walk') p2.state = 'idle';
-        if (keys['arrowup'] && p2.grounded) { p2.vy = -15; p2.grounded = false; p2.state = 'jump'; }
-        p2.isBlocking = !!keys['arrowdown'];
-    }
-    if (keys['j']) p2.attack('punch');
-    if (keys['k']) p2.attack('kick');
-    if (keys['l']) p2.attack('special');
-}
-
-function handleCombat() {
-    const p1Attack = p1.getAttackBox(), p2Hit = p2.getHitbox();
-    if (p1Attack && !p1.attackHit && boxOverlap(p1Attack, p2Hit)) { p1.attackHit = true; p2.takeDamage(p1.getDamage(), p1); }
-    const p2Attack = p2.getAttackBox(), p1Hit = p1.getHitbox();
-    if (p2Attack && !p2.attackHit && boxOverlap(p2Attack, p1Hit)) { p2.attackHit = true; p1.takeDamage(p2.getDamage(), p2); }
-    if (p1.x < p2.x) { p1.facing = 1; p2.facing = -1; } else { p1.facing = -1; p2.facing = 1; }
-    const dist = Math.abs(p1.x - p2.x);
-    if (dist < 50) { const push = (50-dist)/2; if (p1.x < p2.x) { p1.x -= push; p2.x += push; } else { p1.x += push; p2.x -= push; } }
-}
-
-function updateUI() {
-    document.getElementById('p1-health').style.width = p1.health + '%';
-    document.getElementById('p2-health').style.width = p2.health + '%';
-    document.getElementById('p1-super').style.width = p1.superMeter + '%';
-    document.getElementById('p2-super').style.width = p2.superMeter + '%';
-    document.getElementById('timer').textContent = timer;
-    const c1 = document.getElementById('combo-display-p1'), c2 = document.getElementById('combo-display-p2');
-    if (p1.combo > 1) { c1.textContent = p1.combo + ' HIT COMBO!'; c1.style.opacity = '1'; } else c1.style.opacity = '0';
-    if (p2.combo > 1) { c2.textContent = p2.combo + ' HIT COMBO!'; c2.style.opacity = '1'; } else c2.style.opacity = '0';
-}
-
-function announce(text, duration) {
-    const el = document.getElementById('announcement'); el.textContent = text; el.style.opacity = '1';
-    setTimeout(() => { el.style.opacity = '0'; }, duration || 2000);
-}
-
-function checkRoundEnd() {
-    if (p1.health <= 0 || p2.health <= 0 || timer <= 0) {
-        gameState = 'roundEnd'; clearInterval(timerInterval);
-        let winner;
-        if (p1.health <= 0) { winner = 'p2'; p2Wins++; }
-        else if (p2.health <= 0) { winner = 'p1'; p1Wins++; }
-        else { winner = p1.health > p2.health ? 'p1' : 'p2'; if (winner === 'p1') p1Wins++; else p2Wins++; }
-        const winnerName = winner === 'p1' ? p1.name : p2.name;
-        if (p1Wins >= 2 || p2Wins >= 2) {
-            announce(winnerName + ' WINS!', 3000);
-            setTimeout(() => { gameState = 'gameOver'; announce('GAME OVER - SPACE TO RESTART', 99999); }, 3000);
-        } else {
-            announce(winnerName + ' WINS ROUND ' + round, 2000);
-            round++; setTimeout(() => startRound(), 3000);
-        }
-    }
-}
-
-function startRound() {
-    p1.reset(200); p2.reset(800); timer = 99; particles = [];
-    document.getElementById('round-display').textContent = 'ROUND ' + round;
-    announce('ROUND ' + round, 1500);
-    setTimeout(() => { announce('FIGHT!', 1000); gameState = 'fighting';
-        timerInterval = setInterval(() => { if (gameState === 'fighting') { timer--; if (timer <= 0) timer = 0; } }, 1000);
-    }, 2000);
-}
-
-function startGame() { document.getElementById('start-screen').style.display = 'none'; round = 1; p1Wins = 0; p2Wins = 0; startRound(); }
-function resetGame() { document.getElementById('announcement').style.opacity = '0'; round = 1; p1Wins = 0; p2Wins = 0; startRound(); }
-
-function gameLoop() {
-    ctx.save();
-    if (screenShake > 0) { ctx.translate(Math.random()*screenShake - screenShake/2, Math.random()*screenShake - screenShake/2); screenShake *= 0.8; if (screenShake < 0.5) screenShake = 0; }
-    drawBackground();
-    if (gameState === 'fighting' || gameState === 'roundEnd') { handleInput(); handleCombat(); p1.update(); p2.update(); updateParticles(); checkRoundEnd(); }
-    p1.draw(); p2.draw(); drawParticles(); updateUI();
-    ctx.restore();
-    requestAnimationFrame(gameLoop);
-}
-gameLoop();
-</script>
+<script src="game.js"></script>
 </body>
 </html>
