@@ -51,7 +51,7 @@ canvas{display:block;background:#111}
 <script>
 "use strict";
 const cv=document.getElementById('cv'),c=cv.getContext('2d'),W=1000,H=600,GND=H-80;
-let gs='menu',rnd=1,tmr=99,ti=null,w1=0,w2=0,pts=[],shake=0;
+let gs='menu',rnd=1,tmr=60,ti=null,w1=0,w2=0,pts=[],shake=0;
 const K={};
 document.addEventListener('keydown',e=>{K[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();if(gs==='menu')startGame();if(gs==='over')resetAll();}});
 document.addEventListener('keyup',e=>{K[e.key.toLowerCase()]=false;});
@@ -421,7 +421,7 @@ else{msg(wn+' WINS ROUND '+rnd,2000);rnd++;setTimeout(startRound,3000);}
 }
 
 function startRound(){
-p1.reset(200);p2.reset(800);tmr=99;pts=[];
+p1.reset(200);p2.reset(800);tmr=60;pts=[];
 document.getElementById('rnd').textContent='ROUND '+rnd;
 msg('ROUND '+rnd,1500);
 setTimeout(()=>{msg('FIGHT!',1000);gs='fight';ti=setInterval(()=>{if(gs==='fight'){tmr--;if(tmr<=0)tmr=0;}},1000);},2000);
